@@ -28,6 +28,7 @@ func New(cfg *Config) *gin.Engine {
 
 	// Add OpenTelemetry middleware
 	r.Use(otelgin.Middleware(cfg.ServiceName))
+	r.Use(middleware.TraceHeader())
 
 	// Add custom middlewares
 	for _, mw := range cfg.Middlewares {

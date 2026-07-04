@@ -3,9 +3,9 @@ package middleware
 import (
 	"crypto/rsa"
 	"fmt"
-	"net/http"
 	"strings"
 
+	"github.com/f0bima/go-core/response"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -15,17 +15,23 @@ func Auth(pubKey *rsa.PublicKey) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
+			response.Unauthorized(c, "UNAUTHORIZED", "Authorization header is required")
+			c.Abort()
 			return
 		}
 
+		var tokenString string
 		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid Authorization header format"})
+		if len(parts) == 2 && parts[0] == "Bearer" {
+			tokenString = parts[1]
+		} else if len(parts) == 1 {
+			// Lenient mode for Swagger/Scalar UI if user forgets "Bearer "
+			tokenString = parts[0]
+		} else {
+			response.Unauthorized(c, "UNAUTHORIZED", "Invalid Authorization header format")
+			c.Abort()
 			return
 		}
-
-		tokenString := parts[1]
 
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
@@ -35,7 +41,8 @@ func Auth(pubKey *rsa.PublicKey) gin.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+			response.Unauthorized(c, "UNAUTHORIZED", "Invalid or expired token")
+			c.Abort()
 			return
 		}
 
@@ -48,7 +55,8 @@ func Auth(pubKey *rsa.PublicKey) gin.HandlerFunc {
 			c.Set("user_id", userID)
 			c.Set("email", email)
 		} else {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+			response.Unauthorized(c, "UNAUTHORIZED", "Invalid token claims")
+			c.Abort()
 			return
 		}
 

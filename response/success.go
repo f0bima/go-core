@@ -8,15 +8,14 @@ import (
 
 // Meta contains response metadata.
 type Meta struct {
-	TraceID   string `json:"traceId,omitempty"`
 	RequestID string `json:"requestId,omitempty"`
 }
 
-func getTraceID(c *gin.Context) string {
-	if traceID := c.GetString("traceId"); traceID != "" {
-		return traceID
+func getRequestID(c *gin.Context) string {
+	if requestID := c.GetString("requestID"); requestID != "" {
+		return requestID
 	}
-	return ""
+	return c.GetHeader("X-Request-ID")
 }
 
 // SuccessBody contains the success response data.
@@ -35,8 +34,7 @@ func OK(c *gin.Context, data interface{}) {
 	c.JSON(http.StatusOK, SuccessResponse{
 		Data: data,
 		Meta: Meta{
-			TraceID:   getTraceID(c),
-			RequestID: c.GetHeader("X-Request-ID"),
+			RequestID: getRequestID(c),
 		},
 	})
 }
@@ -46,8 +44,7 @@ func Created(c *gin.Context, data interface{}) {
 	c.JSON(http.StatusCreated, SuccessResponse{
 		Data: data,
 		Meta: Meta{
-			TraceID:   getTraceID(c),
-			RequestID: c.GetHeader("X-Request-ID"),
+			RequestID: getRequestID(c),
 		},
 	})
 }
