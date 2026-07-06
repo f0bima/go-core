@@ -26,7 +26,6 @@ type ErrorBody struct {
 // ErrorResponse standardizes the JSON response payload structure for errors.
 type ErrorResponse struct {
 	Error ErrorBody `json:"error"`
-	Meta  Meta      `json:"meta"`
 }
 
 // CustomError sends a custom error response.
@@ -35,9 +34,6 @@ func CustomError(c *gin.Context, status int, code, message string) {
 		Error: ErrorBody{
 			Code:    code,
 			Message: message,
-		},
-		Meta: Meta{
-			RequestID: getRequestID(c),
 		},
 	})
 }
@@ -74,9 +70,6 @@ func CustomErrorWithDetails(c *gin.Context, status int, code, message string, de
 			Code:    code,
 			Message: message,
 			Details: details,
-		},
-		Meta: Meta{
-			RequestID: getRequestID(c),
 		},
 	})
 }
